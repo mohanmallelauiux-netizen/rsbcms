@@ -17,35 +17,44 @@ type Props = {
 
 // Generate dynamic SEO metadata
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const resolvedParams = await params
-  const { slug } = resolvedParams
-  const payload = await getPayload({ config })
-  
-  const res = await payload.find({
-    collection: 'blogs',
-    where: { slug: { equals: slug } },
-  })
+  try {
+    const resolvedParams = await params
+    const { slug } = resolvedParams
+    const payload = await getPayload({ config })
+    
+    const res = await payload.find({
+      collection: 'blogs',
+      where: { slug: { equals: slug } },
+    })
 
-  const blog = res.docs[0]
-  if (!blog) return { title: 'Article Not Found' }
+    const blog = res.docs[0]
+    if (!blog) return { title: 'Article Not Found' }
 
-  return {
-    title: blog.seo?.title || `${blog.title} | Luxury Insights`,
-    description: blog.seo?.description || 'Real estate article',
-    keywords: blog.seo?.keywords || 'real estate insights, guides',
+    return {
+      title: blog.seo?.title || `${blog.title} | Luxury Insights`,
+      description: blog.seo?.description || 'Real estate article',
+      keywords: blog.seo?.keywords || 'real estate insights, guides',
+    }
+  } catch {
+    return { title: 'Luxury Insights' }
   }
 }
 
 // Pre-generate static routes for all seeded articles at build time
 export async function generateStaticParams() {
-  const payload = await getPayload({ config })
-  const res = await payload.find({
-    collection: 'blogs',
-    limit: 100,
-  })
-  return res.docs.map((doc) => ({
-    slug: doc.slug,
-  }))
+  try {
+    const payload = await getPayload({ config })
+    const res = await payload.find({
+      collection: 'blogs',
+      limit: 100,
+    })
+    return res.docs.map((doc) => ({
+      slug: doc.slug,
+    }))
+  } catch (error) {
+    console.warn('Could not pre-generate static params for blogs during build:', error)
+    return []
+  }
 }
 
 export default async function BlogLandingPage({ params }: Props) {

@@ -18,35 +18,44 @@ type Props = {
 
 // Generate dynamic SEO metadata
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const resolvedParams = await params
-  const { slug } = resolvedParams
-  const payload = await getPayload({ config })
-  
-  const res = await payload.find({
-    collection: 'projects',
-    where: { slug: { equals: slug } },
-  })
+  try {
+    const resolvedParams = await params
+    const { slug } = resolvedParams
+    const payload = await getPayload({ config })
+    
+    const res = await payload.find({
+      collection: 'projects',
+      where: { slug: { equals: slug } },
+    })
 
-  const project = res.docs[0]
-  if (!project) return { title: 'Project Not Found' }
+    const project = res.docs[0]
+    if (!project) return { title: 'Project Not Found' }
 
-  return {
-    title: project.seo?.title || `${project.name} | Luxury Estates`,
-    description: project.seo?.description || project.shortDescription,
-    keywords: project.seo?.keywords || 'luxury villa, premium real estate',
+    return {
+      title: project.seo?.title || `${project.name} | Luxury Estates`,
+      description: project.seo?.description || project.shortDescription,
+      keywords: project.seo?.keywords || 'luxury villa, premium real estate',
+    }
+  } catch {
+    return { title: 'Luxury Estates' }
   }
 }
 
 // Pre-generate static routes for all seeded projects at build time
 export async function generateStaticParams() {
-  const payload = await getPayload({ config })
-  const res = await payload.find({
-    collection: 'projects',
-    limit: 100,
-  })
-  return res.docs.map((doc) => ({
-    slug: doc.slug,
-  }))
+  try {
+    const payload = await getPayload({ config })
+    const res = await payload.find({
+      collection: 'projects',
+      limit: 100,
+    })
+    return res.docs.map((doc) => ({
+      slug: doc.slug,
+    }))
+  } catch (error) {
+    console.warn('Could not pre-generate static params for projects during build:', error)
+    return []
+  }
 }
 
 export default async function ProjectLandingPage({ params }: Props) {

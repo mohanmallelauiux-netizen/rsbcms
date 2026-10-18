@@ -24,8 +24,6 @@ import { About } from './globals/About'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-console.log('payload.config.ts process.env.DATABASE_URI:', process.env.DATABASE_URI)
-
 export default buildConfig({
   admin: {
     user: Users.slug,
