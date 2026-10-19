@@ -4,15 +4,19 @@ import config from '@payload-config'
 import { Mail } from 'lucide-react'
 
 export default async function Footer() {
-  const payload = await getPayload({ config })
-  
-  // Fetch Footer and SiteSettings globals
-  const footerData = await payload.findGlobal({
-    slug: 'footer',
-  })
-  const settingsData = await payload.findGlobal({
-    slug: 'site-settings',
-  })
+  let footerData: any = {}
+  let settingsData: any = {}
+  try {
+    const payload = await getPayload({ config })
+    const [f, s] = await Promise.all([
+      payload.findGlobal({ slug: 'footer' }).catch(() => ({})),
+      payload.findGlobal({ slug: 'site-settings' }).catch(() => ({})),
+    ])
+    footerData = f || {}
+    settingsData = s || {}
+  } catch (err) {
+    console.error('Footer fetch error:', err)
+  }
 
   const copyright = footerData.copyright && footerData.copyright !== '© 2026 Luxury Estates. All rights reserved.'
     ? footerData.copyright 
@@ -20,8 +24,8 @@ export default async function Footer() {
   const socialLinks = footerData.socialLinks || []
   const rawColumns = footerData.columns || []
   let columns = [...rawColumns]
-  columns = columns.map((col) => {
-    if (col.title === 'Company' && col.links && !col.links.some((l) => l.url === '/interiors')) {
+  columns = columns.map((col: any) => {
+    if (col.title === 'Company' && col.links && !col.links.some((l: any) => l.url === '/interiors')) {
       const updatedLinks = [...col.links]
       updatedLinks.splice(1, 0, { label: 'Interiors', url: '/interiors' })
       return { ...col, links: updatedLinks }
@@ -69,13 +73,13 @@ export default async function Footer() {
           </div>
 
           {/* Links Cols */}
-          {columns.map((col, idx) => (
+          {columns.map((col: any, idx: number) => (
             <div key={idx} className="flex flex-col gap-4">
               <h4 className="text-sm font-semibold tracking-wide text-foreground font-serif">
                 {col.title}
               </h4>
               <ul className="flex flex-col gap-2 text-xs">
-                {col.links?.map((link, lIdx) => (
+                {col.links?.map((link: any, lIdx: number) => (
                   <li key={lIdx}>
                     <Link href={link.url} className="hover:text-primary transition-colors">
                       {link.label}
@@ -115,7 +119,7 @@ export default async function Footer() {
             {/* Social icons */}
             {socialLinks.length > 0 && (
               <div className="flex items-center gap-3 mt-4">
-                {socialLinks.map((social, sIdx) => (
+                {socialLinks.map((social: any, sIdx: number) => (
                   <a
                     key={sIdx}
                     href={social.url}

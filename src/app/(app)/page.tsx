@@ -16,21 +16,32 @@ export default async function HomePage(props: {
   const lang = rawLang === 'en' ? 'en' : 'te'
   const t = translations[lang]
 
-  const payload = await getPayload({ config })
+  let homeData: any = {}
+  let projectsData: any = { docs: [] }
+  let blogsData: any = { docs: [] }
+  let testimonialsData: any = { docs: [] }
+  let faqsData: any = { docs: [] }
 
-  // Fetch Homepage, Projects, Blogs, Testimonials, and FAQs
-  const homeData = await payload.findGlobal({ slug: 'home' })
-  const projectsData = await payload.find({ collection: 'projects', limit: 3 })
-  const blogsData = await payload.find({ collection: 'blogs', limit: 3 })
-  const testimonialsData = await payload.find({ collection: 'testimonials', limit: 3 })
-  const faqsData = await payload.find({
-    collection: 'faqs',
-    sort: 'createdAt',
-    limit: 100,
-  })
+  try {
+    const payload = await getPayload({ config })
+    const [h, p, b, tData, f] = await Promise.all([
+      payload.findGlobal({ slug: 'home' }).catch(() => ({})),
+      payload.find({ collection: 'projects', limit: 3 }).catch(() => ({ docs: [] })),
+      payload.find({ collection: 'blogs', limit: 3 }).catch(() => ({ docs: [] })),
+      payload.find({ collection: 'testimonials', limit: 3 }).catch(() => ({ docs: [] })),
+      payload.find({ collection: 'faqs', sort: 'createdAt', limit: 100 }).catch(() => ({ docs: [] })),
+    ])
+    homeData = h || {}
+    projectsData = p || { docs: [] }
+    blogsData = b || { docs: [] }
+    testimonialsData = tData || { docs: [] }
+    faqsData = f || { docs: [] }
+  } catch (err) {
+    console.error('Error fetching home data:', err)
+  }
 
   // Extract Hero details
-  const hero = homeData.hero || { title: 'Luxury Living', subtitle: '', ctaText: 'Explore', ctaUrl: '/projects' }
+  const hero = homeData?.hero || { title: 'Luxury Living', subtitle: '', ctaText: 'Explore', ctaUrl: '/projects' }
   let heroBgUrl = ''
   if (typeof hero.backgroundImage === 'object' && hero.backgroundImage && 'url' in hero.backgroundImage) {
     heroBgUrl = hero.backgroundImage.url as string
@@ -41,8 +52,8 @@ export default async function HomePage(props: {
   const heroSubtitle = lang === 'te' ? t.hero.subtitle : (hero.subtitle || t.hero.subtitle)
 
   // Extract Why Choose Us
-  const whyChooseUs = homeData.whyChooseUs || { heading: 'Why Choose Us', subheading: '', points: [] }
-  const stats = homeData.statistics || []
+  const whyChooseUs = homeData?.whyChooseUs || { heading: 'Why Choose Us', subheading: '', points: [] }
+  const stats = homeData?.statistics || []
 
   // Icon selector helper
   const renderIcon = (iconName: string) => {
@@ -57,8 +68,8 @@ export default async function HomePage(props: {
   }
 
   // Dynamic translate project names
-  const translateProjectName = (name: string) => {
-    if (lang !== 'te') return name
+  const translateProjectName = (name: string = '') => {
+    if (lang !== 'te' || !name) return name || ''
     if (name.includes('Skyline')) return 'స్కైలైన్ ఎలైట్ రెసిడెన్సెస్'
     if (name.includes('Aura')) return 'ఆరా ప్రీమియం విల్లాస్'
     if (name.includes('Grand')) return 'గ్రాండ్ ఓక్ పెెంట్‌హౌసెస్'
@@ -126,12 +137,13 @@ export default async function HomePage(props: {
         <section className="relative z-20 -mt-12 mx-auto max-w-6xl w-full px-4">
           <ScrollReveal direction="up" delay={0.2}>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 rounded-2xl border border-border bg-card/90 backdrop-blur-md p-8 shadow-xl text-center">
-              {stats.map((stat, idx) => {
-                let displayLabel = stat.label
-                if (lang === 'te') {
-                  if (stat.label.toLowerCase().includes('delivered')) displayLabel = t.stats.delivered
-                  else if (stat.label.toLowerCase().includes('handover') || stat.label.toLowerCase().includes('years')) displayLabel = t.stats.handovers
-                  else if (stat.label.toLowerCase().includes('award')) displayLabel = t.stats.awards
+              {stats.map((stat: any, idx: number) => {
+                let displayLabel = stat?.label || ''
+                if (lang === 'te' && displayLabel) {
+                  const lower = displayLabel.toLowerCase()
+                  if (lower.includes('delivered')) displayLabel = t.stats.delivered
+                  else if (lower.includes('handover') || lower.includes('years')) displayLabel = t.stats.handovers
+                  else if (lower.includes('award')) displayLabel = t.stats.awards
                 }
                 return (
                   <div key={idx} className="flex flex-col gap-2 relative after:last:hidden after:absolute after:right-0 after:top-1/4 after:h-1/2 after:w-[1px] after:bg-border/60">
@@ -172,7 +184,7 @@ export default async function HomePage(props: {
         </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projectsData.docs.map((project, idx) => {
+          {projectsData.docs.map((project: any, idx: number) => {
             let imgUrl = ''
             if (typeof project.bannerImage === 'object' && project.bannerImage && 'url' in project.bannerImage) {
               imgUrl = project.bannerImage.url as string
@@ -223,7 +235,7 @@ export default async function HomePage(props: {
                       <div className="flex flex-col">
                         <span className="text-xxs uppercase text-muted tracking-wider">{t.projects.startingPrice}</span>
                         <span className="font-serif text-sm font-bold text-foreground">
-                          ${project.startingPrice.toLocaleString()}
+                          ${(project.startingPrice || 0).toLocaleString()}
                         </span>
                       </div>
                       <Link
@@ -349,18 +361,19 @@ export default async function HomePage(props: {
           </ScrollReveal>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {whyChooseUs.points?.map((point, idx) => {
+            {whyChooseUs.points?.map((point: any, idx: number) => {
               // Localize headings
-              let pointTitle = point.title
-              let pointDesc = point.description
-              if (lang === 'te') {
-                if (point.title.toLowerCase().includes('location')) {
+              let pointTitle = point?.title || ''
+              let pointDesc = point?.description || ''
+              if (lang === 'te' && pointTitle) {
+                const lower = pointTitle.toLowerCase()
+                if (lower.includes('location')) {
                   pointTitle = t.usps.locTitle
                   pointDesc = t.usps.locDesc
-                } else if (point.title.toLowerCase().includes('craft')) {
+                } else if (lower.includes('craft')) {
                   pointTitle = t.usps.craftTitle
                   pointDesc = t.usps.craftDesc
-                } else if (point.title.toLowerCase().includes('secur')) {
+                } else if (lower.includes('secur')) {
                   pointTitle = t.usps.secTitle
                   pointDesc = t.usps.secDesc
                 }
@@ -400,7 +413,7 @@ export default async function HomePage(props: {
           </ScrollReveal>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {testimonialsData.docs.map((testimonial, idx) => (
+            {testimonialsData.docs.map((testimonial: any, idx: number) => (
               <ScrollReveal key={testimonial.id} delay={idx * 0.1}>
                 <div className="bg-card border border-border p-8 rounded-2xl flex flex-col gap-6 shadow-sm">
                   <p className="text-xs text-muted/90 italic leading-relaxed">
@@ -416,7 +429,7 @@ export default async function HomePage(props: {
                       </p>
                     </div>
                     <div className="flex gap-0.5">
-                      {Array.from({ length: testimonial.rating }).map((_, i) => (
+                      {Array.from({ length: testimonial.rating || 5 }).map((_, i) => (
                         <span key={i} className="text-primary text-xs">★</span>
                       ))}
                     </div>
@@ -452,7 +465,7 @@ export default async function HomePage(props: {
           </ScrollReveal>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {blogsData.docs.map((blog, idx) => {
+            {blogsData.docs.map((blog: any, idx: number) => {
               let imgUrl = ''
               if (typeof blog.featuredImage === 'object' && blog.featuredImage && 'url' in blog.featuredImage) {
                 imgUrl = blog.featuredImage.url as string

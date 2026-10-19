@@ -18,12 +18,13 @@ export default async function ContactPage(props: Props) {
   const lang = resolvedSearchParams?.lang === 'en' ? 'en' : 'te'
   const t = translations[lang]
 
-  const payload = await getPayload({ config })
-  
-  // Fetch SiteSettings to display configured details
-  const settingsData = await payload.findGlobal({
-    slug: 'site-settings',
-  })
+  let settingsData: any = {}
+  try {
+    const payload = await getPayload({ config })
+    settingsData = await payload.findGlobal({ slug: 'site-settings' }).catch(() => ({})) || {}
+  } catch (err) {
+    console.error('Error fetching settings data in ContactPage:', err)
+  }
 
   // Dynamic localization of seeded parameters
   const address = lang === 'te' 

@@ -5,15 +5,19 @@ import HeaderClient from '@/components/layout/HeaderClient'
 import { Suspense } from 'react'
 
 export default async function Header() {
-  const payload = await getPayload({ config })
-
-  // Fetch Navigation and SiteSettings globals
-  const navData = await payload.findGlobal({
-    slug: 'navigation',
-  })
-  const settingsData = await payload.findGlobal({
-    slug: 'site-settings',
-  })
+  let navData: any = {}
+  let settingsData: any = {}
+  try {
+    const payload = await getPayload({ config })
+    const [n, s] = await Promise.all([
+      payload.findGlobal({ slug: 'navigation' }).catch(() => ({})),
+      payload.findGlobal({ slug: 'site-settings' }).catch(() => ({})),
+    ])
+    navData = n || {}
+    settingsData = s || {}
+  } catch (err) {
+    console.error('Header fetch error:', err)
+  }
 
   // Format links for visual layout
   const rawLinks = navData.links || []

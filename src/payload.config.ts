@@ -50,7 +50,7 @@ export default buildConfig({
   secret: process.env.PAYLOAD_SECRET || '7f5df84b2c159ec11c216260a92cd3484fcf122a7f5c5b16',
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URI || 'postgresql://neondb_owner:npg_ZxpQ69EGUYMI@ep-royal-mode-b4va2ayv-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require',
+      connectionString: process.env.DATABASE_URI || 'postgresql://neondb_owner:npg_ZxpQ69EGUYMI@ep-royal-mode-b4va2ayv-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require',
     },
   }),
   sharp,

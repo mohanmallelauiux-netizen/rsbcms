@@ -21,27 +21,31 @@ export default async function ProjectsPage(props: Props) {
   const lang = resolvedSearchParams?.lang === 'en' ? 'en' : 'te'
   const t = translations[lang]
   
-  const payload = await getPayload({ config })
+  let projectsData: any = { docs: [] }
 
-  // Construct query where clause
-  const whereQuery: Where | undefined = search
-    ? {
-        or: [
-          { name: { like: search } },
-          { location: { like: search } },
-        ],
-      }
-    : undefined
+  try {
+    const payload = await getPayload({ config })
+    const whereQuery: Where | undefined = search
+      ? {
+          or: [
+            { name: { like: search } },
+            { location: { like: search } },
+          ],
+        }
+      : undefined
 
-  const projectsData = await payload.find({
-    collection: 'projects',
-    where: whereQuery,
-    sort: '-createdAt',
-  })
+    projectsData = await payload.find({
+      collection: 'projects',
+      where: whereQuery,
+      sort: '-createdAt',
+    })
+  } catch (err) {
+    console.error('Error fetching projects data:', err)
+  }
 
   // Dynamic translate project names
-  const translateProjectName = (name: string) => {
-    if (lang !== 'te') return name
+  const translateProjectName = (name: string = '') => {
+    if (lang !== 'te' || !name) return name || ''
     if (name.includes('Skyline')) return 'స్కైలైన్ ఎలైట్ రెసిడెన్సెస్'
     if (name.includes('Aura')) return 'ఆరా ప్రీమియం విల్లాస్'
     if (name.includes('Grand')) return 'గ్రాండ్ ఓక్ పెెంట్‌హౌసెస్'
@@ -89,7 +93,7 @@ export default async function ProjectsPage(props: Props) {
       {/* 3. Projects Grid */}
       {projectsData.docs.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {projectsData.docs.map((project, idx) => {
+          {projectsData.docs.map((project: any, idx: number) => {
             let imgUrl = ''
             if (typeof project.bannerImage === 'object' && project.bannerImage && 'url' in project.bannerImage) {
               imgUrl = project.bannerImage.url as string
@@ -140,7 +144,7 @@ export default async function ProjectsPage(props: Props) {
                       <div className="flex flex-col">
                         <span className="text-xxs uppercase text-muted tracking-wider">{t.projects.startingPrice}</span>
                         <span className="font-serif text-sm font-bold text-foreground">
-                          ${project.startingPrice.toLocaleString()}
+                          ${(project.startingPrice || 0).toLocaleString()}
                         </span>
                       </div>
                       <Link

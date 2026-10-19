@@ -13,12 +13,20 @@ export default async function AboutPage(props: {
 
   const payload = await getPayload({ config })
 
-  // Fetch About Page Global and Team members
-  const aboutData = await payload.findGlobal({ slug: 'about' })
-  const teamData = await payload.find({
-    collection: 'team',
-    sort: 'order',
-  })
+  let aboutData: any = {}
+  let teamData: any = { docs: [] }
+
+  try {
+    const payload = await getPayload({ config })
+    const [a, t] = await Promise.all([
+      payload.findGlobal({ slug: 'about' }).catch(() => ({})),
+      payload.find({ collection: 'team', sort: 'order' }).catch(() => ({ docs: [] })),
+    ])
+    aboutData = a || {}
+    teamData = t || { docs: [] }
+  } catch (err) {
+    console.error('Error fetching about data:', err)
+  }
 
   // Story details
   const storyHeading = aboutData.storyHeading || 'Our Story'
@@ -203,7 +211,7 @@ export default async function AboutPage(props: {
           </ScrollReveal>
           
           <div className="flex flex-col gap-8 max-w-3xl mx-auto w-full relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-[1px] before:bg-border/60">
-            {timeline.map((event, idx) => (
+            {timeline.map((event: any, idx: number) => (
               <ScrollReveal key={idx} delay={idx * 0.15} className="flex gap-8 relative">
                 <div>
                   <div className="absolute left-[11px] top-1.5 h-2.5 w-2.5 rounded-full bg-primary border-2 border-background" />
@@ -235,7 +243,7 @@ export default async function AboutPage(props: {
           </ScrollReveal>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-            {teamData.docs.map((member, idx) => {
+            {teamData.docs.map((member: any, idx: number) => {
               let mImgUrl = ''
               if (typeof member.avatar === 'object' && member.avatar && 'url' in member.avatar) {
                 mImgUrl = member.avatar.url as string
