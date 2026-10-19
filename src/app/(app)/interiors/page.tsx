@@ -6,12 +6,11 @@ import { translations } from '@/lib/translations'
 
 export const revalidate = 60
 
-export default async function InteriorsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ lang?: string }>
+export default async function InteriorsPage(props: {
+  searchParams?: Promise<{ lang?: string }>
 }) {
-  const { lang: rawLang } = await searchParams
+  const resolvedSearchParams = props?.searchParams ? await props.searchParams : {}
+  const rawLang = resolvedSearchParams?.lang
   const lang = rawLang === 'en' ? 'en' : 'te'
   const t = translations[lang]
 

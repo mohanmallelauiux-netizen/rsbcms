@@ -8,12 +8,11 @@ import FAQAccordion from '@/components/custom/FAQAccordion'
 
 export const revalidate = 60
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ lang?: string }>
+export default async function HomePage(props: {
+  searchParams?: Promise<{ lang?: string }>
 }) {
-  const { lang: rawLang } = await searchParams
+  const resolvedSearchParams = props?.searchParams ? await props.searchParams : {}
+  const rawLang = resolvedSearchParams?.lang
   const lang = rawLang === 'en' ? 'en' : 'te'
   const t = translations[lang]
 

@@ -9,16 +9,16 @@ import { translations } from '@/lib/translations'
 export const revalidate = 60
 
 type Props = {
-  searchParams: Promise<{
+  searchParams?: Promise<{
     search?: string
     lang?: string
   }>
 }
 
-export default async function ProjectsPage({ searchParams }: Props) {
-  const resolvedSearchParams = await searchParams
-  const search = resolvedSearchParams.search || ''
-  const lang = resolvedSearchParams.lang === 'en' ? 'en' : 'te'
+export default async function ProjectsPage(props: Props) {
+  const resolvedSearchParams = props?.searchParams ? await props.searchParams : {}
+  const search = resolvedSearchParams?.search || ''
+  const lang = resolvedSearchParams?.lang === 'en' ? 'en' : 'te'
   const t = translations[lang]
   
   const payload = await getPayload({ config })
